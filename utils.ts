@@ -85,6 +85,20 @@ export function resolveApiBaseUrl(options: ApiBaseUrlOptions): string {
 	return url.toString().replace(/\/+$/, "");
 }
 
+/** Resolve a provider's API root without dropping its endpoint path or a gateway prefix. */
+export function resolveProviderApiUrl(configStem: string, defaultUrl: string, configuredValue: unknown): string {
+	const official = new URL(defaultUrl);
+	const environmentKey = configStem.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase() + "_BASE_URL";
+	const baseUrl = resolveApiBaseUrl({
+		configKey: configStem + "BaseUrl",
+		configuredValue,
+		defaultValue: official.origin,
+		environmentKey,
+		environmentValue: process.env[environmentKey],
+	});
+	return baseUrl + official.pathname + official.search;
+}
+
 const API_REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const API_REQUEST_BODY_HEADERS = ["Content-Encoding", "Content-Language", "Content-Location", "Content-Type"];
 const MAX_API_REDIRECTS = 5;

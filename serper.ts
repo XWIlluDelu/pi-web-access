@@ -5,7 +5,7 @@ import type { SearchOptions, SearchResponse } from "./perplexity.ts";
 import { formatSearchResultsAsAnswer } from "./search-answer-formatting.ts";
 import { normalizeSearchResultCount } from "./search-result-count-normalization.ts";
 import { hasCredentialSource, redactCredential, resolveCredential } from "./credential-source.ts";
-import { fetchWithCredentialRedirects, getWebSearchConfigPath, resolveApiBaseUrl } from "./utils.ts";
+import { fetchWithCredentialRedirects, getWebSearchConfigPath, resolveProviderApiUrl } from "./utils.ts";
 
 const SERPER_API_BASE_URL = "https://google.serper.dev";
 const CONFIG_PATH = getWebSearchConfigPath();
@@ -49,16 +49,6 @@ function loadConfig(): WebSearchConfig {
 	}
 	cachedConfig = parsed as WebSearchConfig;
 	return cachedConfig;
-}
-
-function getApiBaseUrl(): string {
-	return resolveApiBaseUrl({
-		configKey: "serperBaseUrl",
-		configuredValue: loadConfig().serperBaseUrl,
-		defaultValue: SERPER_API_BASE_URL,
-		environmentKey: "SERPER_BASE_URL",
-		environmentValue: process.env.SERPER_BASE_URL,
-	});
 }
 
 async function getApiKey(signal?: AbortSignal): Promise<string | null> {
@@ -140,7 +130,7 @@ export function isSerperAvailable(): boolean {
 }
 
 export async function searchWithSerper(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
-	const apiBaseUrl = getApiBaseUrl();
+	const apiUrl = resolveProviderApiUrl("serper", `${SERPER_API_BASE_URL}/search`, loadConfig().serperBaseUrl);
 	const apiKey = await requireApiKey(options.signal);
 	const numResults = normalizeSearchResultCount(options.numResults);
 	const filters = parseDomainFilter(options.domainFilter);
@@ -148,7 +138,7 @@ export async function searchWithSerper(query: string, options: SearchOptions = {
 	const activityId = activityMonitor.logStart({ type: "api", query });
 	let response: Response;
 	try {
-		response = await fetchWithCredentialRedirects(`${apiBaseUrl}/search`, {
+		response = await fetchWithCredentialRedirects(apiUrl, {
 			method: "POST",
 			headers: { "X-API-KEY": apiKey, "Content-Type": "application/json", Accept: "application/json" },
 			body: JSON.stringify({ q: buildQuery(query, filters), num: requestCount, ...(options.recencyFilter ? { tbs: RECENCY_TBS[options.recencyFilter] } : {}) }),

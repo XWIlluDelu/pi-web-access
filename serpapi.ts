@@ -5,7 +5,7 @@ import type { SearchOptions, SearchResponse } from "./perplexity.ts";
 import { formatSearchResultsAsAnswer } from "./search-answer-formatting.ts";
 import { normalizeSearchResultCount } from "./search-result-count-normalization.ts";
 import { hasCredentialSource, redactCredential, resolveCredential } from "./credential-source.ts";
-import { fetchWithCredentialRedirects, getWebSearchConfigPath, resolveApiBaseUrl } from "./utils.ts";
+import { fetchWithCredentialRedirects, getWebSearchConfigPath, resolveProviderApiUrl } from "./utils.ts";
 
 const SERPAPI_API_BASE_URL = "https://serpapi.com";
 const CONFIG_PATH = getWebSearchConfigPath();
@@ -49,16 +49,6 @@ function loadConfig(): WebSearchConfig {
 	}
 	cachedConfig = parsed as WebSearchConfig;
 	return cachedConfig;
-}
-
-function getApiBaseUrl(): string {
-	return resolveApiBaseUrl({
-		configKey: "serpapiBaseUrl",
-		configuredValue: loadConfig().serpapiBaseUrl,
-		defaultValue: SERPAPI_API_BASE_URL,
-		environmentKey: "SERPAPI_BASE_URL",
-		environmentValue: process.env.SERPAPI_BASE_URL,
-	});
 }
 
 async function getApiKey(signal?: AbortSignal): Promise<string | null> {
@@ -141,12 +131,12 @@ export function isSerpApiAvailable(): boolean {
 }
 
 export async function searchWithSerpApi(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
-	const apiBaseUrl = getApiBaseUrl();
+	const apiUrl = resolveProviderApiUrl("serpapi", `${SERPAPI_API_BASE_URL}/search.json`, loadConfig().serpapiBaseUrl);
 	const apiKey = await requireApiKey(options.signal);
 	const numResults = normalizeSearchResultCount(options.numResults);
 	const filters = parseDomainFilter(options.domainFilter);
 	const requestCount = options.domainFilter?.length ? Math.min(20, numResults + 5) : numResults;
-	const url = new URL(`${apiBaseUrl}/search.json`);
+	const url = new URL(apiUrl);
 	url.searchParams.set("engine", "google");
 	url.searchParams.set("q", buildQuery(query, filters));
 	url.searchParams.set("api_key", apiKey);

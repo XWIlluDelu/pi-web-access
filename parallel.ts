@@ -4,7 +4,7 @@ import { normalizeDomain } from "./domain-filter-normalization.ts";
 import type { ExtractedContent, ExtractOptions } from "./extract.ts";
 import type { SearchOptions, SearchResponse } from "./perplexity.ts";
 import { hasCredentialSource, redactCredential, resolveCredential } from "./credential-source.ts";
-import { fetchWithCredentialRedirects, getWebSearchConfigPath, resolveApiBaseUrl } from "./utils.ts";
+import { fetchWithCredentialRedirects, getWebSearchConfigPath, resolveProviderApiUrl } from "./utils.ts";
 
 const PARALLEL_API_BASE_URL = "https://api.parallel.ai";
 const CONFIG_PATH = getWebSearchConfigPath();
@@ -68,16 +68,6 @@ function loadConfig(): WebSearchConfig {
 		const message = err instanceof Error ? err.message : String(err);
 		throw new Error(`Failed to parse ${CONFIG_PATH}: ${message}`);
 	}
-}
-
-function getApiBaseUrl(): string {
-	return resolveApiBaseUrl({
-		configKey: "parallelBaseUrl",
-		configuredValue: loadConfig().parallelBaseUrl,
-		defaultValue: PARALLEL_API_BASE_URL,
-		environmentKey: "PARALLEL_BASE_URL",
-		environmentValue: process.env.PARALLEL_BASE_URL,
-	});
 }
 
 export function clearParallelConfigCache(): void {
@@ -303,14 +293,14 @@ async function fetchAndMapExtractResult(
 	body: Record<string, unknown>,
 	signal?: AbortSignal,
 ): Promise<{ mapped: ExtractedContent | null; result: V1ExtractResult | undefined }> {
-	const data = await parallelFetch(`${getApiBaseUrl()}/v1/extract`, body, signal);
+	const data = await parallelFetch(resolveProviderApiUrl("parallel", `${PARALLEL_API_BASE_URL}/v1/extract`, loadConfig().parallelBaseUrl), body, signal);
 	if (hasExtractUrlError(data.errors, url)) return { mapped: null, result: undefined };
 	const result = findExtractResult(data.results as V1ExtractResult[] | undefined, url);
 	return { mapped: mapExtractResult(result), result };
 }
 
 export async function searchWithParallel(query: string, options: ParallelSearchOptions = {}): Promise<SearchResponse> {
-	const data = await parallelFetch(`${getApiBaseUrl()}/v1/search`, buildSearchRequestBody(query, options), options.signal);
+	const data = await parallelFetch(resolveProviderApiUrl("parallel", `${PARALLEL_API_BASE_URL}/v1/search`, loadConfig().parallelBaseUrl), buildSearchRequestBody(query, options), options.signal);
 	const results = data.results as V1WebSearchResult[] | undefined;
 	const response: SearchResponse = {
 		answer: buildAnswerFromExcerpts(results),

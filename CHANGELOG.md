@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added `parallelBaseUrl`, `serperBaseUrl`, and `serpapiBaseUrl` (or `PARALLEL_BASE_URL`, `SERPER_BASE_URL`, and `SERPAPI_BASE_URL`) for API-compatible gateways. Parallel routes both search and extraction through the override. URLs use the same validation as Brave, Exa, and Tavily; cross-origin redirects strip provider credentials, including SerpApi's query-string API key. Thanks to [@XWIlluDelu](https://github.com/XWIlluDelu).
+- Added API base URL overrides for Parallel, Serper, SerpApi, and other single-root HTTP providers, using the same validation as Brave, Exa, and Tavily. Search and extraction share the override where applicable; Jina search and Mistral Conversations have their own settings. Environment variables take precedence, gateway path prefixes are preserved, and cross-origin redirects strip header and query credentials. Existing extraction SSRF checks, provider defaults, and activation rules are unchanged. See the README's API gateway table for supported settings. Thanks to [@XWIlluDelu](https://github.com/XWIlluDelu).
 
 ## [0.43.0] - 2026-10-20
 
