@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Added `parallelBaseUrl`, `serperBaseUrl`, and `serpapiBaseUrl` (or `PARALLEL_BASE_URL`, `SERPER_BASE_URL`, and `SERPAPI_BASE_URL`) for API-compatible gateways. Parallel routes both search and extraction through the override. URLs use the same validation as Brave, Exa, and Tavily; cross-origin redirects strip provider credentials, including SerpApi's query-string API key. Thanks to [@XWIlluDelu](https://github.com/XWIlluDelu).
+
 ## [0.43.0] - 2026-10-20
 
 ### Highlights

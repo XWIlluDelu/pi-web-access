@@ -467,6 +467,7 @@ Config defaults to `~/.pi/agent/web-search.json` when neither `PI_CODING_AGENT_D
   "exaApiKey": "exa-...",
   "exaBaseUrl": "https://gateway.example.com/exa",
   "parallelApiKey": "...",
+  "parallelBaseUrl": "https://gateway.example.com/parallel",
   "tinyfishApiKey": "sk-tinyfish-...",
   "search1apiApiKey": "...",
   "tavilyApiKey": "tvly-...",
@@ -484,7 +485,9 @@ Config defaults to `~/.pi/agent/web-search.json` when neither `PI_CODING_AGENT_D
   "linkupDepth": "fast",
   "deepseekApiKey": "$DEEPSEEK_API_KEY",
   "serpbaseApiKey": "$SERPBASE_API_KEY",
+  "serpapiBaseUrl": "https://gateway.example.com/serpapi",
   "serpapiApiKey": "$SERPAPI_KEY",
+  "serperBaseUrl": "https://gateway.example.com/serper",
   "serperApiKey": "$SERPER_API_KEY",
   "serplyApiKey": "$SERPLY_API_KEY",
   "baizhiApiKey": "$BAIZHI_API_KEY",
@@ -634,13 +637,24 @@ All provider API-key fields (`openaiApiKey`, `braveApiKey`, `parallelApiKey`, `t
 }
 ```
 
-This syntax applies to provider credentials only; other configuration fields are not interpolated. `firecrawlApiKey`, `crawl4aiApiToken`, `kagiApiKey`, `ollamaApiKey`, `valyuApiKey`, `serpbaseApiKey`, `serpapiApiKey`, `serperApiKey`, `serplyApiKey`, `baizhiApiKey`, `zaiApiKey`, `keenableApiKey`, `ceramicApiKey`, `linkupApiKey`, `deepseekApiKey`, `degoogApiKey`, `mistralApiKey`, and `brightdataApiKey` use the same credential-source rules, while `braveBaseUrl`, `exaBaseUrl`, `tavilyBaseUrl`, `firecrawlBaseUrl`, `firecrawlApiVersion`, `firecrawlFreshScrape`, `firecrawlPdfMaxPages`, `crawl4aiBaseUrl`, `degoogBaseUrl`, `degoogEngines`, `brightdataSerpZone`, `brightdataUnlockerZone`, and `zaiEndpoint` are literal config values.
+This syntax applies to provider credentials only; other configuration fields are not interpolated. `firecrawlApiKey`, `crawl4aiApiToken`, `kagiApiKey`, `ollamaApiKey`, `valyuApiKey`, `serpbaseApiKey`, `serpapiApiKey`, `serperApiKey`, `serplyApiKey`, `baizhiApiKey`, `zaiApiKey`, `keenableApiKey`, `ceramicApiKey`, `linkupApiKey`, `deepseekApiKey`, `degoogApiKey`, `mistralApiKey`, and `brightdataApiKey` use the same credential-source rules, while `braveBaseUrl`, `exaBaseUrl`, `tavilyBaseUrl`, `parallelBaseUrl`, `serperBaseUrl`, `serpapiBaseUrl`, `firecrawlBaseUrl`, `firecrawlApiVersion`, `firecrawlFreshScrape`, `firecrawlPdfMaxPages`, `crawl4aiBaseUrl`, `degoogBaseUrl`, `degoogEngines`, `brightdataSerpZone`, `brightdataUnlockerZone`, and `zaiEndpoint` are literal config values.
 
 A command source is not run while the extension loads or registers tools. Each selected provider request runs it again with a five-second timeout, a 16 KiB output limit, a minimized environment, and a one-line non-empty stdout requirement. Command text and stderr are omitted from errors. On Windows the command runs in Git Bash (or `bash.exe` on `PATH`), like Pi's own `!command` config values, so POSIX syntax such as `$HOME` works; it falls back to `cmd.exe` when no bash is found. These commands are trusted local configuration, not a same-user process isolation boundary; use absolute executable paths and protect the config file. `OP_SESSION_*` and `OP_SERVICE_ACCOUNT_TOKEN`, when present in Pi's environment, are forwarded to trusted resolver commands so 1Password CLI sessions and service accounts can be reused without storing their credentials in config. For example, `"braveApiKey": "!/absolute/path/to/op read 'op://Automation/Brave/credential'"` resolves that item after you replace the executable placeholder with your trusted installation's absolute path, but the `op://` argument is not an authorization boundary: every configured resolver command that receives the token can exercise all vault and item permissions granted to its service account. Prefer a narrowly scoped service account. An explicit source overrides legacy provider environment variables and fails that provider locally rather than falling back with a stale credential. Direct Google Gemini API requests send the resolved key only in the `x-goog-api-key` header, never in the URL.
 
 `mistralSearchModel` defaults to `mistral-small-latest` and must be a non-empty string. `mistralSearchTool` defaults to `web_search` and accepts only `web_search` or the opt-in `web_search_premium` tool.
 
-Set `braveBaseUrl`, `exaBaseUrl`, or `tavilyBaseUrl` to route those providers through a compatible HTTPS API gateway. `BRAVE_BASE_URL`, `EXA_BASE_URL`, and `TAVILY_BASE_URL` are the environment-variable equivalents and take precedence over config. Brave appends `/web/search`; Exa and Tavily append `/search`. Defaults remain the providers' official API roots. `exaBaseUrl` applies only to keyed direct API calls; zero-config Exa MCP search continues to use Exa's hosted MCP endpoint. Invalid overrides fail before a request is sent instead of falling back to an official endpoint, and credential headers are removed if a gateway redirects to another origin.
+These providers accept an API base URL for compatible gateways. Environment variables take precedence over config; path prefixes are preserved and trailing slashes are removed.
+
+| Config | Environment variable | Appended paths |
+|---|---|---|
+| `braveBaseUrl` | `BRAVE_BASE_URL` | `/web/search` |
+| `exaBaseUrl` | `EXA_BASE_URL` | `/search` |
+| `tavilyBaseUrl` | `TAVILY_BASE_URL` | `/search` |
+| `parallelBaseUrl` | `PARALLEL_BASE_URL` | `/v1/search`, `/v1/extract` |
+| `serperBaseUrl` | `SERPER_BASE_URL` | `/search` |
+| `serpapiBaseUrl` | `SERPAPI_BASE_URL` | `/search.json` |
+
+Defaults remain the providers' official API roots. Overrides require HTTPS, except HTTP is allowed on loopback hosts (`localhost`, `127.0.0.0/8`, and `::1`). URLs with credentials, query parameters, or fragments are rejected before a request is sent; invalid overrides never fall back to an official endpoint. Cross-origin redirects remove credential headers and SerpApi's `api_key` query parameter. `exaBaseUrl` applies only to keyed direct API calls; zero-config Exa MCP search continues to use Exa's hosted MCP endpoint. `parallelBaseUrl` does not change the separate Parallel MCP provider.
 
 `authFetch` configures named local browser-cookie auth profiles for explicit `fetch_content` calls. A profile can be a host array (`"work": ["docs.company.com"]`) or an object with `hosts`, optional `chromeProfile`, `redirects: "same-origin"`, and `cache: "session" | "off"`.
 

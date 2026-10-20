@@ -93,8 +93,11 @@ export async function fetchWithCredentialRedirects(
 	url: string,
 	init: RequestInit,
 	credentialHeaders: readonly string[],
+	credentialQueryParams: readonly string[] = [],
 ): Promise<Response> {
 	let current = new URL(url);
+	const source = new URL(url);
+	for (const name of credentialQueryParams) source.searchParams.delete(name);
 	let requestInit = init;
 
 	for (let redirects = 0; ; redirects++) {
@@ -104,7 +107,7 @@ export async function fetchWithCredentialRedirects(
 		const location = response.headers.get("location");
 		if (!location) return response;
 		if (redirects === MAX_API_REDIRECTS) {
-			throw new Error(`Too many API redirects from ${url}`);
+			throw new Error(`Too many API redirects from ${source}`);
 		}
 
 		const next = new URL(location, current);
@@ -122,6 +125,7 @@ export async function fetchWithCredentialRedirects(
 			requestInit = { ...withoutBody, method: "GET", headers };
 		}
 		if (next.origin !== current.origin) {
+			for (const name of credentialQueryParams) next.searchParams.delete(name);
 			const headers = new Headers(requestInit.headers);
 			for (const name of credentialHeaders) headers.delete(name);
 			requestInit = { ...requestInit, headers };
