@@ -36,6 +36,8 @@ const providers = [
 	["you", "you", "searchWithYou", "https://ydc-index.io/v1/search", "X-API-Key"],
 ].map(([file, stem, name, url, header, extra]) => ({
 	file, stem, header, methods: [[name, url], ...(extra ? [extra] : [])],
+	envKey: (["ollama", "deepseek"].includes(stem) ? "PI_" : "")
+		+ stem.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase() + "_BASE_URL",
 }));
 
 async function runFixture(t, provider, script, config = {}) {
@@ -58,7 +60,7 @@ async function runFixture(t, provider, script, config = {}) {
 		input: `
 			import assert from "node:assert/strict";
 			const provider = ${JSON.stringify(provider)};
-			const envKey = provider.stem.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase() + "_BASE_URL";
+			const envKey = provider.envKey;
 			const module = await import(${JSON.stringify(moduleUrl)});
 			const options = { lookup: async () => [{address: "93.184.216.34", family: 4}] };
 			const invoke = name => name.startsWith("extract")
@@ -124,6 +126,19 @@ test("Jina dot queries cannot escape the configured gateway prefix", async (t) =
 		assert.equal(calls.length, 0);
 	`, { jinaSearchBaseUrl: "https://gateway.example.com/proxy/jina" });
 });
+
+for (const file of ["ollama", "deepseek"]) {
+	test(`${file}: the bare ${file.toUpperCase()}_BASE_URL used by other tools leaves the official endpoint`, async (t) => {
+		const provider = providers.find(provider => provider.file === file);
+		await runFixture(t, provider, `
+			process.env[${JSON.stringify(file.toUpperCase() + "_BASE_URL")}] = "http://localhost:11434/v1";
+			for (const [name, endpoint] of provider.methods) {
+				await request(name);
+				assert.equal(calls.at(-1).origin + calls.at(-1).path, new URL(endpoint).origin + new URL(endpoint).pathname);
+			}
+		`);
+	});
+}
 
 test("Keenable's public endpoint uses the same override without adding authentication", async (t) => {
 	const provider = providers.find(provider => provider.file === "keenable");

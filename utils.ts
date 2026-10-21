@@ -85,10 +85,15 @@ export function resolveApiBaseUrl(options: ApiBaseUrlOptions): string {
 	return url.toString().replace(/\/+$/, "");
 }
 
+// Other tools commonly set the bare OLLAMA_BASE_URL (a local Ollama server) and DEEPSEEK_BASE_URL
+// (an OpenAI-compatible root ending in /v1), so these providers read PI_-prefixed names instead.
+const PI_PREFIXED_ENVIRONMENT_STEMS = new Set(["ollama", "deepseek"]);
+
 /** Resolve a provider's API root without dropping its endpoint path or a gateway prefix. */
 export function resolveProviderApiUrl(configStem: string, defaultUrl: string, configuredValue: unknown): string {
 	const official = new URL(defaultUrl);
-	const environmentKey = configStem.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase() + "_BASE_URL";
+	const environmentKey = (PI_PREFIXED_ENVIRONMENT_STEMS.has(configStem) ? "PI_" : "")
+		+ configStem.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase() + "_BASE_URL";
 	const baseUrl = resolveApiBaseUrl({
 		configKey: configStem + "BaseUrl",
 		configuredValue,

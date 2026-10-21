@@ -643,7 +643,7 @@ A command source is not run while the extension loads or registers tools. Each s
 
 `mistralSearchModel` defaults to `mistral-small-latest` and must be a non-empty string. `mistralSearchTool` defaults to `web_search` and accepts only `web_search` or the opt-in `web_search_premium` tool.
 
-These providers accept an API base URL for compatible gateways. Environment variables take precedence over config; path prefixes are preserved and trailing slashes are removed.
+These providers accept an API base URL for compatible gateways. Environment variables take precedence over config; path prefixes are preserved and trailing slashes are removed. Ollama and DeepSeek read `PI_OLLAMA_BASE_URL` and `PI_DEEPSEEK_BASE_URL`, because other tools commonly set the bare `OLLAMA_BASE_URL` (a local Ollama server) and `DEEPSEEK_BASE_URL` (an OpenAI-compatible `/v1` root); the bare names are ignored.
 
 | Config | Environment variable | Appended paths |
 |---|---|---|
@@ -654,26 +654,26 @@ These providers accept an API base URL for compatible gateways. Environment vari
 | `bochaBaseUrl` | `BOCHA_BASE_URL` | `/v1/web-search` |
 | `brightdataBaseUrl` | `BRIGHTDATA_BASE_URL` | `/request` (SERP and Web Unlocker) |
 | `ceramicBaseUrl` | `CERAMIC_BASE_URL` | `/search` |
-| `deepseekBaseUrl` | `DEEPSEEK_BASE_URL` | `/v1/tools/search`, `/v1/tools/fetch` |
+| `deepseekBaseUrl` | `PI_DEEPSEEK_BASE_URL` | `/v1/tools/search`, `/v1/tools/fetch` |
 | `jinaSearchBaseUrl` | `JINA_SEARCH_BASE_URL` | `/{encoded query}` |
 | `kagiBaseUrl` | `KAGI_BASE_URL` | `/api/v1/search`, `/api/v1/extract` |
 | `keenableBaseUrl` | `KEENABLE_BASE_URL` | `/v1/search`, `/v1/search/public` |
 | `linkupBaseUrl` | `LINKUP_BASE_URL` | `/v1/search` |
 | `mistralSearchBaseUrl` | `MISTRAL_SEARCH_BASE_URL` | `/v1/conversations` |
-| `ollamaBaseUrl` | `OLLAMA_BASE_URL` | `/api/web_search`, `/api/web_fetch` |
+| `ollamaBaseUrl` | `PI_OLLAMA_BASE_URL` | `/api/web_search`, `/api/web_fetch` |
 | `parallelBaseUrl` | `PARALLEL_BASE_URL` | `/v1/search`, `/v1/extract` |
 | `perplexityBaseUrl` | `PERPLEXITY_BASE_URL` | `/search`, `/chat/completions` |
 | `queritBaseUrl` | `QUERIT_BASE_URL` | `/v1/search`, `/v1/contents` |
 | `search1apiBaseUrl` | `SEARCH1API_BASE_URL` | `/search`, `/crawl` |
 | `searchinfinityBaseUrl` | `SEARCHINFINITY_BASE_URL` | `/search_api/web_search` |
+| `serpapiBaseUrl` | `SERPAPI_BASE_URL` | `/search.json` |
 | `serpbaseBaseUrl` | `SERPBASE_BASE_URL` | `/google/search` |
 | `serpdiveBaseUrl` | `SERPDIVE_BASE_URL` | `/v1/search` |
+| `serperBaseUrl` | `SERPER_BASE_URL` | `/search` |
 | `serplyBaseUrl` | `SERPLY_BASE_URL` | `/v1/search` |
 | `valyuBaseUrl` | `VALYU_BASE_URL` | `/v1/search` |
 | `xcrawlBaseUrl` | `XCRAWL_BASE_URL` | `/v1/serp` |
 | `youBaseUrl` | `YOU_BASE_URL` | `/v1/search` |
-| `serperBaseUrl` | `SERPER_BASE_URL` | `/search` |
-| `serpapiBaseUrl` | `SERPAPI_BASE_URL` | `/search.json` |
 
 Defaults remain the providers' official API roots. Overrides require HTTPS, except HTTP is allowed on loopback hosts (`localhost`, `127.0.0.0/8`, and `::1`). URLs with credentials, query parameters, or fragments are rejected before a request is sent; invalid overrides never fall back to an official endpoint. Cross-origin redirects remove credential headers and the `api_key` query parameter used by SerpApi and SerpBase. `exaBaseUrl` applies only to keyed direct API calls; zero-config Exa MCP search continues to use Exa's hosted MCP endpoint. `parallelBaseUrl` does not change the separate Parallel MCP provider.
 
